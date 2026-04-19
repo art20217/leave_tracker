@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;color:#1d1d1f;min-height:100vh;}
+.app{max-width:520px;margin:0 auto;padding:16px;}
+h1{font-size:18px;font-weight:600;margin-bottom:16px;}
+.tabs{display:flex;gap:4px;background:#e5e5ea;border-radius:10px;padding:3px;margin-bottom:16px;}
+.tab{flex:1;padding:7px 4px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;border-radius:8px;color:#636366;transition:all .2s;}
+.tab.active{background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.panel{display:none;}.panel.active{display:block;}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.metric-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+.metric{background:#f5f5f7;border-radius:10px;padding:12px 10px;text-align:center;}
+.metric-label{font-size:11px;color:#8e8e93;margin-bottom:4px;}
+.metric-value{font-size:24px;font-weight:600;color:#1d1d1f;line-height:1;}
+.metric-unit{font-size:11px;color:#8e8e93;margin-top:2px;}
+.metric-sub{font-size:10px;color:#8e8e93;margin-top:3px;}
+.section-title{font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.field{margin-bottom:10px;}
+.field label{display:block;font-size:13px;color:#636366;margin-bottom:4px;}
+.field input,.field select{width:100%;padding:9px 12px;border:1px solid #d1d1d6;border-radius:8px;font-size:14px;color:#1d1d1f;background:#fff;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:#007aff;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.hint{font-size:12px;color:#8e8e93;margin-top:4px;min-height:16px;line-height:1.5;}
+.hint.warn{color:#ff3b30;}
+.btn{width:100%;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;background:#007aff;color:#fff;transition:background .2s;}
+.btn:hover{background:#0066d6;}
+.btn-outline{background:transparent;color:#007aff;border:1px solid #007aff;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;white-space:nowrap;}
+.records{border-radius:8px;overflow:hidden;border:1px solid #f0f0f5;margin-top:10px;}
+.record-row{display:flex;align-items:center;padding:9px 12px;font-size:13px;border-bottom:1px solid #f5f5f7;gap:6px;}
+.record-row:last-child{border-bottom:none;}
+.record-row:nth-child(even){background:#fafafa;}
+.rec-date{color:#8e8e93;min-width:88px;font-size:12px;}
+.rec-info{flex:1;}
+.del-btn{background:none;border:none;color:#c7c7cc;cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+.del-btn:hover{background:#fff2f2;color:#ff3b30;}
+.empty{font-size:13px;color:#c7c7cc;padding:16px;text-align:center;}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;margin-left:6px;}
+.badge-green{background:#d4f0d4;color:#34c759;}
+.badge-amber{background:#fff3cd;color:#ff9500;}
+.badge-red{background:#ffd7d5;color:#ff3b30;}
+.type-tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;font-weight:500;}
+.tag-annual{background:#e3f2fd;color:#007aff;}
+.tag-personal{background:#fce4ec;color:#e91e63;}
+.tag-sick{background:#e8f5e9;color:#34c759;}
+.tag-other{background:#f3e5f5;color:#9c27b0;}
+.tag-pay{background:#fff3e0;color:#ff9500;}
+.ov-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:14px;border-bottom:1px solid #f5f5f7;}
+.ov-row:last-child{border-bottom:none;}
+.ov-row.bold{font-weight:600;}
+.ov-label{color:#636366;}
+.law-box{background:#f0f7ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#007aff;margin-top:8px;line-height:1.7;}
+.days-hours-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.input-sub{font-size:11px;color:#8e8e93;margin-top:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>📅 假勤追蹤</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('leave')">特休</button>
+    <button class="tab" onclick="switchTab('overtime')">加班</button>
+    <button class="tab" onclick="switchTab('comp')">補休</button>
+    <button class="tab" onclick="switchTab('overview')">總覽</button>
+  </div>
+
+  <!-- 特休 -->
+  <div id="panel-leave" class="panel active">
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">當年應得特休</div><div class="metric-value" id="lv-total-disp">0</div><div class="metric-unit">天</div><div class="metric-sub" id="lv-total-sub">—</div></div>
+      <div class="metric"><div class="metric-label">已請特休</div><div class="metric-value" id="lv-used-disp">0</div><div class="metric-unit">天</div><div class="metric-sub" id="lv-used-sub">0 小時</div></div>
+      <div class="metric"><div class="metric-label">剩餘特休</div><div class="metric-value" id="lv-remain-disp">0</div><div class="metric-unit">天</div><div class="metric-sub" id="lv-remain-sub">0 小時</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">歷年制設定</div>
+      <div class="field"><label>到職日</label><input type="date" id="lv-hire-date" oninput="calcLeaveHistorical()"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <div class="field" style="flex:1;margin:0;"><label>當年特休天數（可手動覆蓋）</label><input type="number" id="lv-total-input" value="0" min="0" max="30" step="0.5" oninput="setLeaveTotal(this.value)"></div>
+        <button class="btn-outline" onclick="calcLeaveHistorical()">重新試算</button>
+      </div>
+      <div id="lv-law-hint" class="hint"></div>
+      <div id="lv-law-box" style="display:none;" class="law-box"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">新增請假紀錄</div>
+      <div class="row-2">
+        <div class="field"><label>日期</label><input type="date" id="lv-date"></div>
+        <div class="field"><label>假別</label><select id="lv-type"><option>特休</option><option>事假</option><option>病假</option><option>其他</option></select></div>
+      </div>
+      <div class="days-hours-row">
+        <div class="field"><label>天數</label><input type="number" id="lv-days" value="0" min="0" max="30" step="1"><div class="input-sub">整天數</div></div>
+        <div class="field"><label>小時</label><input type="number" id="lv-hours" value="0" min="0" max="7" step="0.5"><div class="input-sub">不足一天的小時數</div></div>
+      </div>
+      <div class="field"><label>備註（選填）</label><input type="text" id="lv-note"></div>
+      <div id="lv-add-hint" class="hint"></div>
+      <button class="btn" onclick="addLeave()">＋ 新增紀錄</button>
+    </div>
+    <div id="lv-list"></div>
+  </div>
+
+  <!-- 加班 -->
+  <div id="panel-overtime" class="panel">
+    <div class="metric-grid-2">
+      <div class="metric"><div class="metric-label">累計加班</div><div class="metric-value" id="ot-total">0</div><div class="metric-unit">小時</div></div>
+      <div class="metric"><div class="metric-label">可轉補休</div><div class="metric-value" id="ot-comp">0</div><div class="metric-unit">小時</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">新增加班紀錄</div>
+      <div class="row-2">
+        <div class="field"><label>日期</label><input type="date" id="ot-date"></div>
+        <div class="field"><label>時數</label><input type="number" id="ot-hours" value="2" min="0.5" max="24" step="0.5"></div>
+      </div>
+      <div class="field"><label>結算方式</label><select id="ot-settle"><option value="comp">補休</option><option value="pay">薪資結算</option></select></div>
+      <div class="field"><label>備註（選填）</label><input type="text" id="ot-note"></div>
+      <div id="ot-add-hint" class="hint"></div>
+      <button class="btn" onclick="addOvertime()">＋ 新增紀錄</button>
+    </div>
+    <div id="ot-list"></div>
+  </div>
+
+  <!-- 補休 -->
+  <div id="panel-comp" class="panel">
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">補休額度</div><div class="metric-value" id="cp-avail">0</div><div class="metric-unit">小時</div></div>
+      <div class="metric"><div class="metric-label">已使用</div><div class="metric-value" id="cp-used">0</div><div class="metric-unit">小時</div></div>
+      <div class="metric"><div class="metric-label">剩餘額度</div><div class="metric-value" id="cp-remain">0</div><div class="metric-unit">小時</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">新增補休使用紀錄</div>
+      <div style="font-size:12px;color:#8e8e93;margin-bottom:10px;">加班 1 小時 ＝ 補休 1 小時</div>
+      <div class="row-2">
+        <div class="field"><label>日期</label><input type="date" id="cp-date"></div>
+        <div class="field"><label>時數</label><input type="number" id="cp-hours" value="1" min="0.5" max="24" step="0.5"></div>
+      </div>
+      <div class="field"><label>備註（選填）</label><input type="text" id="cp-note"></div>
+      <div id="cp-add-hint" class="hint"></div>
+      <button class="btn" onclick="addComp()">＋ 新增使用</button>
+    </div>
+    <div id="cp-list"></div>
+  </div>
+
+  <!-- 總覽 -->
+  <div id="panel-overview" class="panel">
+    <div class="card">
+      <div class="section-title">特休狀況</div>
+      <div class="ov-row"><span class="ov-label">當年應得特休</span><span id="ov-lv-total">—</span></div>
+      <div class="ov-row"><span class="ov-label">已請特休</span><span id="ov-lv-used">—</span></div>
+      <div class="ov-row"><span class="ov-label">其他假別</span><span id="ov-lv-other">—</span></div>
+      <div class="ov-row"><span class="ov-label">剩餘特休</span><span id="ov-lv-remain">—</span></div>
+    </div>
+    <div class="card">
+      <div class="section-title">加班 ／ 補休</div>
+      <div class="ov-row"><span class="ov-label">累計加班時數</span><span id="ov-ot">—</span></div>
+      <div class="ov-row"><span class="ov-label">其中補休時數</span><span id="ov-ot-comp">—</span></div>
+      <div class="ov-row"><span class="ov-label">已使用補休</span><span id="ov-cp-used">—</span></div>
+      <div class="ov-row"><span class="ov-label">剩餘補休額度</span><span id="ov-cp-remain">—</span></div>
+    </div>
+    <div class="card">
+      <div class="section-title">可用假期合計</div>
+      <div class="ov-row"><span class="ov-label">剩餘特休</span><span id="ov-sum-leave">—</span></div>
+      <div class="ov-row"><span class="ov-label">剩餘補休</span><span id="ov-sum-comp">—</span></div>
+      <div class="ov-row bold"><span class="ov-label">合計可用</span><span id="ov-sum-total">—</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var leaveTotal = 0, leaveTotalExact = 0;
+var leaveRecords = [], otRecords = [], cpRecords = [];
+var typeClass = {'特休':'tag-annual','事假':'tag-personal','病假':'tag-sick','其他':'tag-other'};
+
+function f1(n) { return parseFloat(n.toFixed(1)); }
+
+// 將小時數轉為「x 天 x 小時」格式（用於總覽）
+function fDH(h) {
+  var d = Math.floor(h / 8);
+  var r = Math.round((h - d * 8) * 10) / 10;
+  if(d > 0 && r > 0) return d + ' 天 ' + r + ' 小時';
+  if(d > 0) return d + ' 天';
+  if(r > 0) return r + ' 小時';
+  return '0 天';
+}
+
+function getLegalDays(totalMonths) {
+  if(totalMonths < 6)  return 0;
+  if(totalMonths < 12) return 3;
+  var y = Math.floor(totalMonths / 12);
+  if(y < 2)  return 7;
+  if(y < 3)  return 10;
+  if(y < 5)  return 14;
+  if(y < 10) return 15;
+  return Math.min(16 + (y - 10), 30);
+}
+
+function diffWholeMonths(from, to) {
+  var y = to.getFullYear() - from.getFullYear();
+  var m = to.getMonth() - from.getMonth();
+  var d = to.getDate() - from.getDate();
+  var total = y * 12 + m;
+  if(d < 0) total--;
+  return total;
+}
+
+function molFormula(Mfrac, oldDays, newDays) {
+  var denom = (oldDays === 3) ? 6 : 12;
+  var front = (Mfrac / denom) * oldDays;
+  var back  = newDays - (Mfrac / 12) * newDays;
+  return Math.round((front + back) * 10) / 10;
+}
+
+function fmtDate(d) { return d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate(); }
+
+function calcLeaveHistorical() {
+  var hire = document.getElementById('lv-hire-date').value;
+  var hint = document.getElementById('lv-law-hint');
+  var box  = document.getElementById('lv-law-box');
+  if(!hire) { box.style.display='none'; return; }
+  var hireDate = new Date(hire + 'T00:00:00');
+  var today = new Date(); today.setHours(0,0,0,0);
+  if(hireDate > today) { hint.textContent='到職日不可為未來日期'; hint.className='hint warn'; box.style.display='none'; return; }
+  var thisYear = today.getFullYear();
+  var jan1  = new Date(thisYear, 0, 1);
+  var dec31 = new Date(thisYear, 11, 31);
+  var lines = [], totalDays = 0;
+
+  if(hireDate >= jan1) {
+    var sixMo = new Date(hireDate);
+    sixMo.setMonth(sixMo.getMonth() + 6);
+    if(sixMo <= dec31) {
+      var mToSix = diffWholeMonths(jan1, sixMo);
+      var dRem   = sixMo.getDate() - 1;
+      var dInMo  = new Date(sixMo.getFullYear(), sixMo.getMonth()+1, 0).getDate();
+      var Mfrac  = mToSix + dRem / dInMo;
+      var seg    = Math.round((3 - (Mfrac/6)*3) * 10) / 10;
+      totalDays  = seg;
+      lines.push('到職年：滿6個月後（' + fmtDate(sixMo) + '）至年底');
+      lines.push('公式 = 3 − (' + mToSix + ' + ' + dRem + '/' + dInMo + ')/6 × 3 = ' + seg + ' 天');
+    } else {
+      lines.push('到職年底前未滿6個月，當年特休 0 天');
+      totalDays = 0;
+    }
+  } else {
+    var anniv = new Date(thisYear, hireDate.getMonth(), hireDate.getDate());
+    var monthsAtJan1  = diffWholeMonths(hireDate, jan1);
+    var legalAtJan1   = getLegalDays(monthsAtJan1);
+    var monthsAtAnniv = diffWholeMonths(hireDate, anniv);
+    var legalAtAnniv  = getLegalDays(monthsAtAnniv);
+    var hasUpgrade    = (anniv >= jan1 && anniv <= dec31 && legalAtAnniv !== legalAtJan1);
+
+    if(legalAtJan1 === 0 && !hasUpgrade) {
+      lines.push('本年底前年資未滿6個月，當年特休 0 天');
+      totalDays = 0;
+    } else if(legalAtJan1 === 0 && hasUpgrade) {
+      var mToAnniv2 = diffWholeMonths(jan1, anniv);
+      var dRem2  = anniv.getDate() - 1;
+      var dInMo2 = new Date(anniv.getFullYear(), anniv.getMonth()+1, 0).getDate();
+      var Mfrac2 = mToAnniv2 + dRem2 / dInMo2;
+      var seg2   = Math.round((3 - (Mfrac2/6)*3) * 10) / 10;
+      totalDays  = seg2;
+      lines.push('年初年資未滿6個月，' + fmtDate(anniv) + '滿6個月');
+      lines.push('公式 = 3 − (' + mToAnniv2 + ' + ' + dRem2 + '/' + dInMo2 + ')/6 × 3 = ' + seg2 + ' 天');
+    } else if(hasUpgrade) {
+      var mToAnniv = diffWholeMonths(jan1, anniv);
+      var dRemA  = anniv.getDate() - 1;
+      var dInMoA = new Date(anniv.getFullYear(), anniv.getMonth()+1, 0).getDate();
+      var MfracA = mToAnniv + dRemA / dInMoA;
+      var result = molFormula(MfracA, legalAtJan1, legalAtAnniv);
+      totalDays  = result;
+      var denom  = (legalAtJan1 === 3) ? 6 : 12;
+      lines.push('本年 ' + fmtDate(anniv) + ' 進級（' + legalAtJan1 + '天→' + legalAtAnniv + '天）');
+      lines.push('公式 = (' + mToAnniv + '+' + dRemA + '/' + dInMoA + ')/' + denom + ' × ' + legalAtJan1 + ' + (' + legalAtAnniv + ' − (' + mToAnniv + '+' + dRemA + '/' + dInMoA + ')/12 × ' + legalAtAnniv + ') = ' + result + ' 天');
+    } else {
+      totalDays = legalAtJan1;
+      var yy = Math.floor(monthsAtJan1/12), mm = monthsAtJan1 % 12;
+      lines.push('年資 ' + yy + '年' + mm + '個月，無進級，法定天數 ' + legalAtJan1 + ' 天');
+    }
+  }
+
+  hint.textContent = '';
+  hint.className   = 'hint';
+  box.style.display = 'block';
+  box.innerHTML = lines.map(function(l){ return '📋 ' + l; }).join('<br>') +
+    '<br>✅ 本年度應得特休：<strong>' + f1(totalDays) + ' 天</strong>（歷年制，年底歸零）';
+
+  leaveTotal = f1(totalDays);
+  leaveTotalExact = leaveTotal;
+  document.getElementById('lv-total-input').value = leaveTotal;
+  renderLeave();
+}
+
+function setLeaveTotal(v) { leaveTotal = parseFloat(v) || 0; renderLeave(); }
+function toHours(days, hours) { return (parseFloat(days)||0)*8 + (parseFloat(hours)||0); }
+
+function addLeave() {
+  var date = document.getElementById('lv-date').value;
+  var days = parseFloat(document.getElementById('lv-days').value) || 0;
+  var hrs  = parseFloat(document.getElementById('lv-hours').value) || 0;
+  var type = document.getElementById('lv-type').value;
+  var note = document.getElementById('lv-note').value;
+  var hint = document.getElementById('lv-add-hint');
+  if(!date) { hint.textContent='請選擇日期'; hint.className='hint warn'; return; }
+  if(days===0 && hrs===0) { hint.textContent='天數或小時至少填一項'; hint.className='hint warn'; return; }
+  if(hrs >= 8) { hint.textContent='小時數應小於 8'; hint.className='hint warn'; return; }
+  hint.textContent = ''; hint.className = 'hint';
+  leaveRecords.push({date:date, days:days, hours:hrs, type:type, note:note});
+  leaveRecords.sort(function(a,b){ return a.date > b.date ? -1 : 1; });
+  document.getElementById('lv-days').value  = 0;
+  document.getElementById('lv-hours').value = 0;
+  document.getElementById('lv-note').value  = '';
+  renderLeave();
+}
+function delLeave(i) { leaveRecords.splice(i,1); renderLeave(); }
+
+function renderLeave() {
+  var annualH = leaveRecords.filter(function(r){ return r.type==='特休'; }).reduce(function(s,r){ return s+toHours(r.days,r.hours); }, 0);
+  var totalH  = leaveTotal * 8;
+  var remainH = totalH - annualH;
+  document.getElementById('lv-total-disp').textContent  = f1(leaveTotal);
+  document.getElementById('lv-total-sub').textContent   = f1(totalH) + ' 小時';
+  document.getElementById('lv-used-disp').textContent   = f1(annualH / 8);
+  document.getElementById('lv-used-sub').textContent    = f1(annualH) + ' 小時';
+  document.getElementById('lv-remain-disp').textContent = f1(remainH / 8);
+  document.getElementById('lv-remain-sub').textContent  = f1(remainH) + ' 小時';
+  var list = document.getElementById('lv-list');
+  if(!leaveRecords.length) { list.innerHTML = '<div class="empty">尚無紀錄</div>'; return; }
+  list.innerHTML = '<div class="records">' + leaveRecords.map(function(r,i){
+    var tc  = typeClass[r.type] || 'tag-other';
+    var dur = (r.days>0 ? r.days+'天' : '') + (r.hours>0 ? (r.days>0?' ':'')+r.hours+'小時' : '');
+    return '<div class="record-row"><span class="rec-date">'+r.date+'</span><span class="rec-info"><span class="type-tag '+tc+'">'+r.type+'</span> '+dur+(r.note?' · '+r.note:'')+'</span><button class="del-btn" onclick="delLeave('+i+')">✕</button></div>';
+  }).join('') + '</div>';
+}
+
+function addOvertime() {
+  var date   = document.getElementById('ot-date').value;
+  var hours  = parseFloat(document.getElementById('ot-hours').value) || 0;
+  var settle = document.getElementById('ot-settle').value;
+  var note   = document.getElementById('ot-note').value;
+  var hint   = document.getElementById('ot-add-hint');
+  if(!date || hours<=0) { hint.textContent='請填寫有效的日期與時數'; hint.className='hint warn'; return; }
+  hint.textContent = ''; hint.className = 'hint';
+  otRecords.push({date:date, hours:hours, settle:settle, note:note});
+  otRecords.sort(function(a,b){ return a.date > b.date ? -1 : 1; });
+  document.getElementById('ot-note').value = '';
+  renderOvertime(); renderComp();
+}
+function delOvertime(i) { otRecords.splice(i,1); renderOvertime(); renderComp(); }
+
+function renderOvertime() {
+  var total     = otRecords.reduce(function(s,r){ return s+r.hours; }, 0);
+  var compTotal = otRecords.filter(function(r){ return r.settle==='comp'; }).reduce(function(s,r){ return s+r.hours; }, 0);
+  var cpUsed    = cpRecords.reduce(function(s,r){ return s+r.hours; }, 0);
+  document.getElementById('ot-total').textContent = f1(total);
+  document.getElementById('ot-comp').textContent  = f1(Math.max(0, compTotal - cpUsed));
+  var list = document.getElementById('ot-list');
+  if(!otRecords.length) { list.innerHTML = '<div class="empty">尚無紀錄</div>'; return; }
+  list.innerHTML = '<div class="records">' + otRecords.map(function(r,i){
+    var tag = r.settle==='comp' ? '<span class="type-tag tag-annual">補休</span>' : '<span class="type-tag tag-pay">薪資</span>';
+    return '<div class="record-row"><span class="rec-date">'+r.date+'</span><span class="rec-info">'+tag+' '+r.hours+' 小時'+(r.note?' · '+r.note:'')+'</span><button class="del-btn" onclick="delOvertime('+i+')">✕</button></div>';
+  }).join('') + '</div>';
+}
+
+function addComp() {
+  var date  = document.getElementById('cp-date').value;
+  var hours = parseFloat(document.getElementById('cp-hours').value) || 0;
+  var note  = document.getElementById('cp-note').value;
+  var hint  = document.getElementById('cp-add-hint');
+  if(!date || hours<=0) { hint.textContent='請填寫有效的日期與時數'; hint.className='hint warn'; return; }
+  var compTotal = otRecords.filter(function(r){ return r.settle==='comp'; }).reduce(function(s,r){ return s+r.hours; }, 0);
+  var cpUsed    = cpRecords.reduce(function(s,r){ return s+r.hours; }, 0);
+  if(hours > compTotal - cpUsed + 0.001) { hint.textContent='補休時數超過可用額度'; hint.className='hint warn'; return; }
+  hint.textContent = ''; hint.className = 'hint';
+  cpRecords.push({date:date, hours:hours, note:note});
+  cpRecords.sort(function(a,b){ return a.date > b.date ? -1 : 1; });
+  document.getElementById('cp-note').value = '';
+  renderComp(); renderOvertime();
+}
+function delComp(i) { cpRecords.splice(i,1); renderComp(); renderOvertime(); }
+
+function renderComp() {
+  var compTotal = otRecords.filter(function(r){ return r.settle==='comp'; }).reduce(function(s,r){ return s+r.hours; }, 0);
+  var cpUsed    = cpRecords.reduce(function(s,r){ return s+r.hours; }, 0);
+  var remain    = Math.max(0, compTotal - cpUsed);
+  document.getElementById('cp-avail').textContent  = f1(compTotal);
+  document.getElementById('cp-used').textContent   = f1(cpUsed);
+  document.getElementById('cp-remain').textContent = f1(remain);
+  var list = document.getElementById('cp-list');
+  if(!cpRecords.length) { list.innerHTML = '<div class="empty">尚無使用紀錄</div>'; return; }
+  list.innerHTML = '<div class="records">' + cpRecords.map(function(r,i){
+    return '<div class="record-row"><span class="rec-date">'+r.date+'</span><span class="rec-info">使用 '+r.hours+' 小時'+(r.note?' · '+r.note:'')+'</span><button class="del-btn" onclick="delComp('+i+')">✕</button></div>';
+  }).join('') + '</div>';
+}
+
+function switchTab(name) {
+  ['leave','overtime','comp','overview'].forEach(function(n,i){
+    document.querySelectorAll('.tab')[i].classList.toggle('active', n===name);
+    document.getElementById('panel-'+n).classList.toggle('active', n===name);
+  });
+  if(name === 'overview') renderOverview();
+}
+
+function renderOverview() {
+  var annualH   = leaveRecords.filter(function(r){ return r.type==='特休'; }).reduce(function(s,r){ return s+toHours(r.days,r.hours); }, 0);
+  var otherH    = leaveRecords.filter(function(r){ return r.type!=='特休'; }).reduce(function(s,r){ return s+toHours(r.days,r.hours); }, 0);
+  var totalH    = leaveTotal * 8;
+  var lvRemainH = Math.max(0, totalH - annualH);
+  var otTotal   = otRecords.reduce(function(s,r){ return s+r.hours; }, 0);
+  var compTotal = otRecords.filter(function(r){ return r.settle==='comp'; }).reduce(function(s,r){ return s+r.hours; }, 0);
+  var cpUsed    = cpRecords.reduce(function(s,r){ return s+r.hours; }, 0);
+  var cpRemain  = Math.max(0, compTotal - cpUsed);
+  var sumH      = lvRemainH + cpRemain;
+
+  document.getElementById('ov-lv-total').textContent = fDH(totalH) + '（' + f1(leaveTotal) + ' 天）';
+  document.getElementById('ov-lv-used').textContent  = fDH(annualH) + '（' + f1(annualH/8) + ' 天）';
+  document.getElementById('ov-lv-other').textContent = fDH(otherH) + '（' + f1(otherH/8) + ' 天）';
+
+  var lvBadge = lvRemainH>40 ? '<span class="badge badge-green">充足</span>' : lvRemainH>0 ? '<span class="badge badge-amber">偏少</span>' : '<span class="badge badge-red">已用完</span>';
+  document.getElementById('ov-lv-remain').innerHTML = fDH(lvRemainH) + lvBadge;
+
+  document.getElementById('ov-ot').textContent      = f1(otTotal) + ' 小時';
+  document.getElementById('ov-ot-comp').textContent = f1(compTotal) + ' 小時';
+  document.getElementById('ov-cp-used').textContent = f1(cpUsed) + ' 小時';
+  var cpBadge = cpRemain>0 ? '<span class="badge badge-green">有餘額</span>' : '<span class="badge badge-amber">無餘額</span>';
+  document.getElementById('ov-cp-remain').innerHTML = f1(cpRemain) + ' 小時' + cpBadge;
+
+  var sumBadge = sumH/8>5 ? '<span class="badge badge-green">充足</span>' : sumH>0 ? '<span class="badge badge-amber">偏少</span>' : '<span class="badge badge-red">已用完</span>';
+  document.getElementById('ov-sum-leave').textContent = fDH(lvRemainH);
+  document.getElementById('ov-sum-comp').textContent  = fDH(cpRemain);
+  document.getElementById('ov-sum-total').innerHTML   = fDH(sumH) + sumBadge;
+}
+
+leaveRecords = [
+  {date:'2026-01-08', days:1, hours:0, type:'特休', note:'特休'},
+  {date:'2026-02-13', days:0, hours:4, type:'其他', note:'特准假'},
+  {date:'2026-04-23', days:1, hours:0, type:'特休', note:'特休'},
+  {date:'2026-04-24', days:1, hours:0, type:'特休', note:'特休'},
+  {date:'2026-04-27', days:1, hours:0, type:'特休', note:'特休'},
+];
+otRecords = [
+  {date:'2026-04-08', hours:2,   settle:'pay',  note:'平日加班（薪資結算）'},
+  {date:'2026-04-09', hours:1.5, settle:'comp', note:'平日加班（補休，期限05/31）'},
+  {date:'2026-04-16', hours:2.5, settle:'comp', note:'平日加班（補休，期限05/31）'},
+];
+renderLeave(); renderOvertime(); renderComp();
+</script>
+</body>
+</html>
