@@ -1,0 +1,14 @@
+{
+  "name": "假勤追蹤器",
+  "short_name": "假勤",
+  "description": "特休、加班、補休追蹤工具",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#007aff",
+  "lang": "zh-TW",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

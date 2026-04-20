@@ -1,0 +1,28 @@
+<?xml version="1.0" standalone="no"?>
+<svg id="svg-512-pro" width="256" height="256" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Main Frame -->
+                        <rect x="80" y="120" width="352" height="312" rx="40" stroke="#0056D2" stroke-width="12" fill="white"/>
+                        
+                        <!-- Internal Calendar Grids (Same Blue, Lower Opacity or Thin) -->
+                        <g stroke="#0056D2" stroke-width="2" stroke-opacity="0.2">
+                            <!-- Horizontal Lines -->
+                            <line x1="80" y1="195" x2="432" y2="195"/>
+                            <line x1="80" y1="270" x2="432" y2="270"/>
+                            <line x1="80" y1="345" x2="432" y2="345"/>
+                            <!-- Vertical Lines -->
+                            <line x1="168" y1="195" x2="168" y2="432"/>
+                            <line x1="256" y1="195" x2="256" y2="432"/>
+                            <line x1="344" y1="195" x2="344" y2="432"/>
+                        </g>
+
+                        <!-- Top Pegs -->
+                        <rect x="150" y="70" width="24" height="90" rx="12" fill="#0056D2"/>
+                        <rect x="338" y="70" width="24" height="90" rx="12" fill="#0056D2"/>
+                        
+                        <!-- Green Checkmark (Layered ABOVE grids) -->
+                        <path d="M180 310L240 370L350 240" stroke="#28A745" stroke-width="45" stroke-linecap="round" stroke-linejoin="round"/>
+                        
+                        <!-- Floating Clock -->
+                        <circle cx="390" cy="390" r="75" fill="white" stroke="#0056D2" stroke-width="12"/>
+                        <path d="M390 355V390L415 405" stroke="#0056D2" stroke-width="10" stroke-linecap="round"/>
+                    </svg>
