@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>假勤追蹤器</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#05050a">
@@ -281,7 +281,26 @@ function DarkStatusBar({ time='9:41' }) {
   );
 }
 
+const isMobile = window.matchMedia('(max-width:600px)').matches ||
+  window.navigator.standalone === true ||
+  window.matchMedia('(display-mode:standalone)').matches;
+
 function Phone({ children }) {
+  if (isMobile) {
+    return (
+      <div style={{
+        position:'fixed', inset:0,
+        background:'var(--app-bg, #0a0a14)',
+        display:'flex', flexDirection:'column',
+        paddingTop:'env(safe-area-inset-top, 0px)',
+        paddingBottom:'env(safe-area-inset-bottom, 0px)',
+        paddingLeft:'env(safe-area-inset-left, 0px)',
+        paddingRight:'env(safe-area-inset-right, 0px)',
+      }}>
+        {children}
+      </div>
+    );
+  }
   return (
     <div style={{
       width: 402, height: 874, borderRadius: 54, position:'relative',
@@ -362,7 +381,7 @@ function TabBar({ active, onChange }) {
   ];
   return (
     <div style={{
-      padding:'8px 16px 26px',
+      padding: isMobile ? '8px 16px calc(12px + env(safe-area-inset-bottom, 0px))' : '8px 16px 26px',
       background:'linear-gradient(to top, rgba(10,10,20,.95), rgba(10,10,20,.6) 60%, transparent)',
     }}>
       <div className="glass" style={{
